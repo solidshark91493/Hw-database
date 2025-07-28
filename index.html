@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hot Wheels Viewer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Hot Wheels Mainline Viewer</h1>
+  <div class="controls">
+    <select id="yearSelect"></select>
+    <input type="text" id="searchInput" placeholder="Search cars..." />
+  </div>
+  <div id="carList">Loading...</div>
+  <script src="cars.js"></script>
+  <script>
+    const yearSelect = document.getElementById('yearSelect');
+    const searchInput = document.getElementById('searchInput');
+    const carList = document.getElementById('carList');
+
+    if (!window.cars || window.cars.length === 0) {
+      carList.innerHTML = "<p>No cars found in the database.</p>";
+    } else {
+      const uniqueYears = [...new Set(window.cars.map(car => car.year))].sort((a, b) => b - a);
+      uniqueYears.forEach(year => {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearSelect.appendChild(option);
+      });
+
+      function renderCars(filteredCars) {
+        carList.innerHTML = '';
+        filteredCars.forEach(car => {
+          const div = document.createElement('div');
+          div.className = 'car';
+          div.innerHTML = `
+            <strong>#${car.collectorNumber} - ${car.name}</strong><br/>
+            <em>${car.series}</em> | ${car.color} | ${car.year}
+          `;
+          carList.appendChild(div);
+        });
+      }
+
+      function filterCars() {
+        const year = parseInt(yearSelect.value);
+        const query = searchInput.value.toLowerCase();
+        const filtered = window.cars.filter(car =>
+          (!year || car.year === year) &&
+          (!query || car.name.toLowerCase().includes(query))
+        );
+        renderCars(filtered);
+      }
+
+      yearSelect.addEventListener('change', filterCars);
+      searchInput.addEventListener('input', filterCars);
+
+      // Default load
+      yearSelect.value = uniqueYears[0];
+      filterCars();
+    }
+  </script>
+</body>
+</html>
