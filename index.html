@@ -1,65 +1,107 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Hot Wheels Viewer</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Hot Wheels Database</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    select, input {
+      padding: 6px;
+      margin: 10px 0;
+      width: 100%;
+      max-width: 400px;
+    }
+    .car-entry {
+      background: white;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .variant {
+      margin: 6px 0;
+      padding: 6px;
+      border-top: 1px solid #ddd;
+    }
+    img.variant-img {
+      max-width: 120px;
+      display: block;
+      margin-top: 5px;
+      border-radius: 4px;
+    }
+    .car-entry a {
+      font-size: 0.9em;
+      color: #007bff;
+    }
+  </style>
 </head>
 <body>
-  <h1>Hot Wheels Mainline Viewer</h1>
-  <div class="controls">
-    <select id="yearSelect"></select>
-    <input type="text" id="searchInput" placeholder="Search cars..." />
-  </div>
-  <div id="carList">Loading...</div>
+  <h1>Hot Wheels Collection Viewer</h1>
+
+  <label for="yearSelect">Select Year:</label>
+  <select id="yearSelect">
+    <option value="">-- Choose a Year --</option>
+  </select>
+
+  <div id="carList"></div>
+
   <script src="cars.js"></script>
   <script>
-    const yearSelect = document.getElementById('yearSelect');
-    const searchInput = document.getElementById('searchInput');
-    const carList = document.getElementById('carList');
+    document.addEventListener("DOMContentLoaded", () => {
+      const yearSelect = document.getElementById("yearSelect");
+      const carList = document.getElementById("carList");
 
-    if (!window.cars || window.cars.length === 0) {
-      carList.innerHTML = "<p>No cars found in the database.</p>";
-    } else {
-      const uniqueYears = [...new Set(window.cars.map(car => car.year))].sort((a, b) => b - a);
-      uniqueYears.forEach(year => {
-        const option = document.createElement('option');
-        option.value = year;
-        option.textContent = year;
-        yearSelect.appendChild(option);
+      const years = [...new Set(window.cars.map(c => c.year))].sort((a, b) => b - a);
+      years.forEach(year => {
+        const opt = document.createElement("option");
+        opt.value = year;
+        opt.textContent = year;
+        yearSelect.appendChild(opt);
       });
 
-      function renderCars(filteredCars) {
-        carList.innerHTML = '';
+      yearSelect.addEventListener("change", () => {
+        const year = parseInt(yearSelect.value);
+        const filteredCars = window.cars.filter(c => c.year === year);
+        carList.innerHTML = "";
+
         filteredCars.forEach(car => {
-          const div = document.createElement('div');
-          div.className = 'car';
-          div.innerHTML = `
-            <strong>#${car.collectorNumber} - ${car.name}</strong><br/>
-            <em>${car.series}</em> | ${car.color} | ${car.year}
+          const div = document.createElement("div");
+          div.className = "car-entry";
+
+          let html = `
+            <h3>${car.name}</h3>
+            <p><strong>Series:</strong> ${car.series}</p>
+            <p><strong>Base:</strong> ${car.base || "Unknown"}</p>
+            <p><strong>Origin:</strong> ${car.origin || "Unknown"}</p>
+            <a href="${car.detailsURL}" target="_blank">View on Hot Wheels Wiki</a>
+            <div>
+              <strong>Variants:</strong>
           `;
+
+          car.variants?.forEach(v => {
+            html += `
+              <div class="variant">
+                <p><strong>Color:</strong> ${v.color}</p>
+                <p><strong>Wheels:</strong> ${v.wheels}</p>
+                <p><strong>Estimated Value:</strong> ${v.valueEstimate || "Unknown"}</p>
+                ${v.image ? `<img class="variant-img" src="${v.image}" alt="${v.color}" />` : ""}
+              </div>
+            `;
+          });
+
+          html += "</div>";
+          div.innerHTML = html;
           carList.appendChild(div);
         });
-      }
-
-      function filterCars() {
-        const year = parseInt(yearSelect.value);
-        const query = searchInput.value.toLowerCase();
-        const filtered = window.cars.filter(car =>
-          (!year || car.year === year) &&
-          (!query || car.name.toLowerCase().includes(query))
-        );
-        renderCars(filtered);
-      }
-
-      yearSelect.addEventListener('change', filterCars);
-      searchInput.addEventListener('input', filterCars);
-
-      // Default load
-      yearSelect.value = uniqueYears[0];
-      filterCars();
-    }
+      });
+    });
   </script>
 </body>
 </html>
